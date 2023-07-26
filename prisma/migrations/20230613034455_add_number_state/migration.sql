@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `PhoneNumber` ADD COLUMN `state` ENUM('ACTIVE', 'SUSPENDED') NOT NULL DEFAULT 'ACTIVE';

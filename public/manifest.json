@@ -1,0 +1,12 @@
+{
+  "name": "Bluesea Video Console",
+  "short_name": "Bluesea Video Console",
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "scope": "/",
+  "start_url": "/",
+  "icons": [],
+  "splash_pages": null
+}

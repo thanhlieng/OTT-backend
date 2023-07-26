@@ -1,0 +1,35 @@
+@import 'antd/dist/reset.css';
+@import '_reset.scss';
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
+*,
+::before,
+::after {
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: theme('borderColor.DEFAULT');
+}
+
+* {
+  font-family: 'Inter', sans-serif !important;
+}
+
+::before,
+::after {
+  --tw-content: '';
+}
+
+a {
+  color: #0969da;
+
+  &:hover {
+    color: #0969da;
+    text-decoration: underline;
+  }
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

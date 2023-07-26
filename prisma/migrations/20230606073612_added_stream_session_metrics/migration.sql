@@ -1,0 +1,15 @@
+-- AlterTable
+ALTER TABLE `StreamSession` ADD COLUMN `jitter` DOUBLE NULL,
+    ADD COLUMN `jitter_max` DOUBLE NULL,
+    ADD COLUMN `jitter_min` DOUBLE NULL,
+    ADD COLUMN `lost` DOUBLE NULL,
+    ADD COLUMN `lost_max` DOUBLE NULL,
+    ADD COLUMN `lost_min` DOUBLE NULL,
+    ADD COLUMN `mos` DOUBLE NULL,
+    ADD COLUMN `mos_max` DOUBLE NULL,
+    ADD COLUMN `mos_min` DOUBLE NULL,
+    ADD COLUMN `rtt` DOUBLE NULL,
+    ADD COLUMN `rtt_max` DOUBLE NULL,
+    ADD COLUMN `rtt_min` DOUBLE NULL,
+    MODIFY `joined_at` DATETIME(3) NULL,
+    MODIFY `leaved_at` DATETIME(3) NULL;

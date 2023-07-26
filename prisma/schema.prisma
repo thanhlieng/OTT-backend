@@ -1,0 +1,273 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+// Start next-auth
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  created_at        Int?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  password      String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  role          String    @default("USER")
+  status        String    @default("INACTIVE")
+  created_at    DateTime  @default(now())
+
+  accounts Account[]
+  sessions Session[]
+  groups   AdminsOnGroups[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// End of next-auth
+
+enum PhoneNumberState {
+  ACTIVE
+  SUSPENDED
+}
+
+model PhoneNumber {
+  number     String    @id
+  name       String    @default("")
+  avatar     String?
+  password   String
+  created_at DateTime  @default(now())
+  updated_at DateTime?
+  alias_for_number String?
+  sip_in     Boolean   @default(false)
+  sip_out    Boolean   @default(false)
+  state      PhoneNumberState @default(ACTIVE)
+  manage_by_id String?
+
+  push_tokens PushToken[]
+  call_from   Call[]      @relation("from")
+  call_to     Call[]      @relation("to")
+  groups      PhoneNumbersOnGroups[]
+  favorites   NumbersInFavorites[] @relation("owner")
+  alias_for   PhoneNumber? @relation("alias-number", references: [number], fields: [alias_for_number], onDelete: NoAction, onUpdate: NoAction)
+  aliases     PhoneNumber[] @relation("alias-number")
+  manage_by   Group? @relation(fields: [manage_by_id], references: [id])
+
+  @@index([alias_for_number])
+  @@index([manage_by_id])
+}
+
+model Group {
+  id         String    @id @default(cuid())
+  name       String
+  after_call_feedback String?
+  bluesea_api String?
+  bluesea_gateway String?
+  bluesea_token String?
+  bluesea_record Boolean?
+  created_at DateTime  @default(now())
+  updated_at DateTime?
+  numbers    PhoneNumbersOnGroups[]
+  admins     AdminsOnGroups[]
+  manage_numbers PhoneNumber[]
+}
+
+model PhoneNumbersOnGroups {
+  number     PhoneNumber     @relation(fields: [number_id], references: [number])
+  number_id  String
+  group      Group @relation(fields: [group_id], references: [id])
+  group_id   String
+  assigned_at DateTime @default(now())
+  assigned_by String
+
+  @@id([number_id, group_id])
+  @@index([group_id])
+  @@index([number_id])
+}
+
+model AdminsOnGroups {
+  user        User     @relation(fields: [user_id], references: [id])
+  user_id     String
+  group       Group    @relation(fields: [group_id], references: [id])
+  group_id    String
+  assigned_at DateTime @default(now())
+  assigned_by String
+
+  @@id([user_id, group_id])
+  @@index([group_id])
+  @@index([user_id])
+}
+
+model PushToken {
+  id         String    @id @default(cuid())
+  token      String    @unique()
+  number_id  String
+  created_at DateTime  @default(now())
+  updated_at DateTime?
+  production Boolean?
+  active     Boolean   @default(true)
+
+  number PhoneNumber @relation(fields: [number_id], references: [number], onDelete: Cascade)
+  @@index([number_id])
+}
+
+enum CallState {
+  WAITING
+  RINGING
+  CANCELED
+  ACCEPTED
+  REJECTED
+  ENDED
+  ERROR
+  TIMEOUT
+}
+
+model Room {
+  id          String    @id @default(cuid())
+  created_at  DateTime  @default(now())
+  record_uri  String?
+  record_path String?
+  compose_url String?
+  compose_job_id String? @db.Text
+  deleted     Boolean @default(false)
+
+  calls       Call[] @relation("room")
+  sessions    StreamSession[] @relation("room")
+}
+
+model Call {
+  id          String    @id @default(cuid())
+  state       CallState
+  feedback    String?
+  room_id     String
+  from_number String
+  to_number   String
+  created_at  DateTime  @default(now())
+  type        String    @default("audio")
+  started_at  DateTime?
+  ended_at    DateTime?
+  deleted     Boolean @default(false)
+
+  room Room @relation("room", fields: [room_id], references: [id], onDelete: Cascade)
+  from PhoneNumber? @relation("from", fields: [from_number], references: [number], onDelete: Cascade)
+  to   PhoneNumber? @relation("to", fields: [to_number], references: [number], onDelete: Cascade)
+  sessions    StreamSession[] @relation("call")
+
+  @@index([id, state])
+  @@index([room_id])
+  @@index([from_number])
+  @@index([to_number])
+  @@index([created_at])
+}
+
+model StreamSession {
+  id          String    @id @default(cuid())
+  room_id     String
+  call_id     String
+  number      String
+  created_at  DateTime  @default(now()) 
+  joined_at   DateTime?
+  leaved_at   DateTime?
+  mos         Float?
+  mos_min     Float?
+  mos_max     Float?
+  rtt         Float?
+  rtt_min     Float?
+  rtt_max     Float?
+  jitter      Float?
+  jitter_min  Float?
+  jitter_max  Float?
+  lost        Float?
+  lost_min    Float?
+  lost_max    Float?
+  user_agent  String?
+  ip          String?
+  zone_lat    Float?
+  zone_lon    Float?
+  connect_ms  Int?
+  deleted     Boolean @default(false)
+
+  room Room @relation("room", fields: [room_id], references: [id], onDelete: Cascade)
+  call Call @relation("call", fields: [call_id], references: [id], onDelete: Cascade)
+  hook_logs CallActionLogs[] @relation("stream")
+
+  @@unique([room_id, call_id, number])
+  @@index([room_id])
+  @@index([call_id])
+}
+
+model NumbersInFavorites {
+  id          String    @id @default(cuid())
+  number_id   String
+  number      PhoneNumber     @relation("owner", fields: [number_id], references: [number])
+  contact_id  String
+  created_at  DateTime  @default(now())
+
+  @@index([number_id])
+  @@index([contact_id])
+}
+
+model CallActionLogs {
+  id          String    @id @default(cuid())
+  room_id     String
+  call_id     String
+  number      String
+  created_at  DateTime  @default(now())
+  action      String
+  success     Boolean
+  error       String?
+  user_agent  String?
+  ip          String?
+  device      String?
+  network     String?
+  os_name     String?
+  os_version  String?
+  deleted     Boolean @default(false)
+
+  stream      StreamSession @relation("stream", fields: [room_id, call_id, number], references: [room_id, call_id, number], onDelete: Cascade)
+
+  @@index([room_id, call_id, number])
+  @@index([created_at])
+}

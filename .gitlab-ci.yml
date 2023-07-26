@@ -1,0 +1,10 @@
+include:
+  - project: 'template/gitlab-ci'
+    ref: 'main'
+    file: 'k8s-pipeline.yml'
+
+variables:
+  APP_NAME: "chat-jpt"
+  ARGOCD_APP_NAME: "chat-jpt"
+  MANIFEST_REPO: devops/manifests/core
+  CI_BRANCH: main
