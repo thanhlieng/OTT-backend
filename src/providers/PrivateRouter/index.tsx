@@ -22,9 +22,5 @@ export const PrivateRouter: React.FC<Props> = ({ children }) => {
     }
   }, [router.pathname, status])
 
-  return (
-    <div className="relative">
-      {children}
-    </div>
-  )
+  return <div className="relative">{children}</div>
 }

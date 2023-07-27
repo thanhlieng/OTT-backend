@@ -7,12 +7,14 @@ import {
   Get,
   Param,
   ParseNumberPipe,
+  Post,
   Put,
   Query,
   SetHeader,
 } from 'next-api-decorators'
 import { ApiExceptionHandler, ApiResponse, NextAuthGuard, SessionUser, success } from '@/lib/api_helper'
 import { getPrisma } from '@/lib/database'
+import { genHashPass } from '@/lib/hash_helper'
 import { AllowUserManagerRole, UserInfo, UserRole, UserStatus } from '@/types'
 import { PageRes } from '@/utils/request'
 
@@ -24,6 +26,14 @@ export class UpdateUserStatusInput {
 export class UpdateUserRoleInput {
   @IsEnum(UserRole)
   role!: string
+}
+
+export class CreateUser {
+  @IsEnum(UserRole)
+  username!: string
+  name!: string
+  password!: string
+  email?: string
 }
 
 @NextAuthGuard()
@@ -115,6 +125,22 @@ class UserRouter {
       return { status: false, error: 'NO_PERMISSION' }
     }
     await getPrisma().user.update({ where: { id }, data: { status: body.status } })
+    return success({})
+  }
+
+  @Post('/create')
+  // @SetHeader('Cache-Control', 'nostore')
+  public async create_admin(@Body() body: CreateUser): Promise<ApiResponse<any>> {
+    console.log(body)
+    const target_user = await getPrisma().user.findUnique({ where: { username: body.username } })
+    if (target_user) {
+      return { status: false, error: 'EXISTED' }
+    }
+    const hashed_password = await genHashPass(body.password)
+    const data = { ...body, password: hashed_password }
+    await getPrisma().user.create({
+      data,
+    })
     return success({})
   }
 
