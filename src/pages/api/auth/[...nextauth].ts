@@ -62,7 +62,7 @@ export const authOptions: NextAuthOptions = {
 }
 
 export default NextAuth({
-  secret: 'dc244ed507da1803cb42073e071c28ab',
+  secret: env.NEXTAUTH_SECRET,
   adapter: PrismaAdapter(new PrismaClient()),
   providers,
   session: {
