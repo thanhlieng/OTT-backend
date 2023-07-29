@@ -2,12 +2,14 @@ import http2 from 'http2';
 import { env } from '@/constants/env';
 
 export const sendNotification = (deviceId: string, aps: any, production: boolean) => {
+ const pfx =  Buffer.from((process.env.APPLE_PUSH_P12_BASE64 as string) || '', 'base64');
+  
     return new Promise((resolve, reject) => {
         const client = http2.connect(
-            production ? 'https://api.push.apple.com' : 'https://api.sandbox.push.apple.com',
+          'https://api.sandbox.push.apple.com',
             {
-                pfx: env.APPLE_PUSH_P12,
-                passphrase: '',
+                pfx,
+                passphrase: env.APPLE_PASS_PHRASE,
             }
         );
 
@@ -72,7 +74,7 @@ export const sendIncomingCallNotification = async (deviceId: string, body: ApnsN
         },
     };
     if (production == null) {
-        sendNotification(deviceId, conf, true)
+        // sendNotification(deviceId, conf, true)
         sendNotification(deviceId, conf, false)
     } else {
         sendNotification(deviceId, conf, production)

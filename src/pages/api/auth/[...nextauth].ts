@@ -9,6 +9,7 @@ import { PrismaAdapter } from '@next-auth/prisma-adapter'
 import { PrismaClient } from '@prisma/client'
 import { env } from '@/constants/env'
 import { getPrisma } from '@/lib/database'
+import CredentialsProvider from "next-auth/providers/credentials";
 
 const providers: Provider[] = []
 
@@ -57,6 +58,50 @@ if (env.SLACK_ID) {
   )
 }
 
+providers.push(CredentialsProvider({
+  // The name to display on the sign in form (e.g. "Sign in with...")
+  name: "Credentials",
+  // `credentials` is used to generate a form on the sign in page.
+  // You can specify which fields should be submitted, by adding keys to the `credentials` object.
+  // e.g. domain, username, password, 2FA token, etc.
+  // You can pass any HTML attribute to the <input> tag through the object.
+  credentials: {
+    username: { label: "Username", type: "text", placeholder: "jsmith" },
+    password: { label: "Password", type: "password" }
+  },
+  async authorize(credentials, req) {
+    // Add logic here to look up the user from the credentials supplied
+    console.log("12312321312", credentials);
+    
+
+    const userDB = await getPrisma().user.findFirst({where: {username : credentials?.username}})
+
+    console.log("user", userDB);
+    
+
+    if(userDB){
+      return userDB
+    } else {
+      return null
+    }
+
+    const user = { id: "1", name: "J Smith", email: "jsmith@example.com" }
+
+
+    
+
+    if (user) {
+      // Any object returned will be saved in `user` property of the JWT
+      return user
+    } else {
+      // If you return null then an error will be displayed advising the user to check their details.
+      return null
+
+      // You can also Reject this callback with an Error thus the user will be sent to the error page with the error message as a query parameter
+    }
+  }
+}))
+
 export const authOptions: NextAuthOptions = {
   providers,
 }
@@ -73,11 +118,16 @@ export default NextAuth({
   },
   callbacks: {
     session: async (data: any) => {
+      console.log("đến sao đêi", data);
+      
       const user = await getPrisma().user.findUnique({ where: { id: data.token.sub } })
       if (user) {
         data.session.user.role = user.role
         data.session.user.status = user.status
       }
+
+      console.log("4545454545", data.session);
+      
       return data.session
     },
   },

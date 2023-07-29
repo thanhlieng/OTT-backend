@@ -1,9 +1,9 @@
-import { Button, Divider, Typography } from 'antd'
+import { Button, Divider, Input, Typography } from 'antd'
 import { map, values } from 'lodash'
 import { BuiltInProviderType } from 'next-auth/providers'
 import { ClientSafeProvider, LiteralUnion, signIn, SignInOptions } from 'next-auth/react'
 import { useRouter } from 'next/router'
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import { LOGIN_GLOBAL, LOGIN_WORLD_MAP, LOGO_BLACK_LONG } from '@public'
 
 type Props = {
@@ -12,6 +12,34 @@ type Props = {
 
 export const Login: React.FC<Props> = ({ providers }) => {
   const router = useRouter()
+  const [username, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+const [isCreden, setIsCreden] = useState<boolean>(false);
+
+  const signInPress = (a: any, b:any) => {
+    if(a == "credentials"){
+      setIsCreden(true)
+      return;
+    }
+    signIn(a, b)
+  }
+
+  const signInCreden = async () => {
+    await signIn('credentials', {
+      redirect: true,
+      username,
+      password,
+      callbackUrl:'http://localhost:3000/'
+    })
+      .then((response) => {
+        console.log(response);
+        // router.replace('/profile');
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  }
+
   const signInOpts: SignInOptions = useMemo(() => {
     return {
       callbackUrl: (router.query.callbackUrl as string) || '/',
@@ -27,7 +55,10 @@ export const Login: React.FC<Props> = ({ providers }) => {
             Sign in
           </Typography.Title>
           <Typography.Paragraph>Sign in using any of the following services</Typography.Paragraph>
-          {map(values(providers), (provider) => (
+          {!isCreden ? (map(values(providers), (provider) => {
+            console.log("provider", provider);
+       
+            return (
             <Button
               key={provider?.id}
               size="large"
@@ -35,13 +66,57 @@ export const Login: React.FC<Props> = ({ providers }) => {
               type="primary"
               ghost
               onClick={() => {
-                signIn(provider?.id, signInOpts)
+                signInPress(provider.id, signInOpts)
               }}
               className="mb-2"
             >
               Sign In with {provider?.name}
             </Button>
-          ))}
+            )}
+          )) : (<div style={{maxWidth: '500px'}}>
+             <Input
+                  type={'Username'}
+                  placeholder={'Username'}
+                  size={'large'}
+                  name="username"
+                  value={username}
+                  style={{marginBottom: '10px'}}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                <Input
+                  type={'password'}
+                  size={'large'}
+                  placeholder="Password"
+                  style={{marginBottom: '10px'}}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <Button
+              size='middle'
+              block
+              type="primary"
+              ghost
+              onClick={() => {
+                signInCreden()
+              }}
+              className="mb-2"
+            >
+              Sign In
+            </Button>
+            <Button
+              size='middle'
+              block
+              type="primary"
+              ghost
+              onClick={() => {
+                setIsCreden(false)
+              }}
+              className="mb-2"
+            >
+              Sign In with other options
+            </Button>
+          </div>)}
+          
         </div>
         <img src={LOGIN_GLOBAL} alt="" className="w-full lg:w-[600px]" />
       </div>
